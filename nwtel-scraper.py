@@ -25,6 +25,7 @@ class NwtelSpider(Spider):
 
   def get_usage(self, response):
     selector = Selector(response)
+    
     #grabs current data usage, data cap and current overage cost
     usage = selector.xpath('//a/text()').extract()[2]
     cap = selector.xpath('//td/text()').extract()[0]
