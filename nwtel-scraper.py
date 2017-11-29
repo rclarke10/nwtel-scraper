@@ -43,6 +43,9 @@ class NwtelSpider(Spider):
 
     #calc precent used
     percent_used = round(usage_float / cap_float , 3)
+
+    #remove $ from cost
+    cost = cost[1:]
     
     items = {'data_usage': usage_float, 
              'data_cap': cap_float, 
@@ -66,8 +69,7 @@ if __name__ == "__main__":
 
       print("Usage:        ",data['data_usage'], "GB")
       print("Data Cap:     ",data['data_cap'], "GB")
-      print("Overage cost: ", data['overage_cost'])
-      print("Percent Used: ", data['percent_used'])
-      #print(items)
+      print("Overage cost:  $", data['overage_cost'])
+      print("Percent Used: ", round(data['percent_used']*100,1),"%")
     except:
       print("Unexpected error")
