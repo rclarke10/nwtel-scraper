@@ -4,16 +4,19 @@ from scrapy.selector import Selector
 import scrapy
 import json
 from .DataUsageItem import DataUsage
+from .Config import Config
 
 class NwtelSpider(Spider):
   name = "nwtel"
   allowed_domains = ["nwtel.ca"]
   start_urls = ["https://ubbapps.nwtel.ca/cable_usage/secured/index.jsp"]
+  
 
   def parse(self, response):
+    mac_address = Config.get_mac()
     formdata = {'j_target_url':'secured/index.jsp', #some default post url used
-                'MAC':'c8fb26a159ee', #mac addresss
-                'j_username':'C8FB26A159EE', #seems to just capitalize MAC address correctly
+                'MAC': mac_address, #mac addresss
+                'j_username':mac_address, #seems to just capitalize MAC address correctly
                 'j_password':'123456'} #some default password used
     yield FormRequest.from_response(response,
                                     formdata=formdata,
