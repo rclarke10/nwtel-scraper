@@ -1,10 +1,6 @@
-from scrapy.http import FormRequest
-from scrapy.spiders import Spider
-from scrapy.selector import Selector
 from scrapy.crawler import CrawlerProcess
 import scrapy
 import json
-from src.DataUsageItem import DataUsage
 from src.DataUsagePipeline import DataUsagePipeline
 from src.DataUsageSpider import NwtelSpider
     
@@ -12,7 +8,7 @@ if __name__ == "__main__":
     #initialize crawler
     process = CrawlerProcess({
       'USER_AGENT': 'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)',
-      'LOG_ENABLED': 'True',
+      'LOG_ENABLED': 'False',
       'ITEM_PIPELINES': {
         'main.DataUsagePipeline': 300,
       }
