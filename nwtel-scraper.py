@@ -8,9 +8,6 @@ from scrapy.utils.project import get_project_settings
 from scrapy.crawler import Crawler
 import json
 
-results = []
-
-
 class CrawlerPipeline(object):
     def process_item(self, item, spider):
         results.append(dict(item))
@@ -41,35 +38,40 @@ class NwtelSpider(Spider):
     usage_float = round(float(usage.split(' ')[0]),3)
     cap_float = round(float(cap.split(' ')[0]),3)
 
-    #calc precent used
+    #calc percent used
     percent_used = round(usage_float / cap_float , 3)
 
     #remove $ from cost
     cost = cost[1:]
     
-    items = {'data_usage': usage_float, 
+    #construct dict containing usage stats
+    stats = {'data_usage': usage_float, 
              'data_cap': cap_float, 
              'overage_cost': cost, 
              'percent_used': percent_used}
     
+    #dump to usage.json
     with open('usage.json', 'w') as file:
-      json.dump(items, file)
+      json.dump(stats, file)
     
 if __name__ == "__main__":
-
+    #initialize crawler
     process = CrawlerProcess({
       'USER_AGENT': 'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)',
       'LOG_ENABLED': 'False'
     })
 
+    #start crawler, blocks until it returns
     process.crawl(NwtelSpider)
-    process.start() #the script will block here until the crawling is finished
-    try:
-      data = json.load(open('usage.json'))
+    process.start()
 
-      print("Usage:        ",data['data_usage'], "GB")
-      print("Data Cap:     ",data['data_cap'], "GB")
-      print("Overage cost:  $", data['overage_cost'])
-      print("Percent Used: ", round(data['percent_used']*100,1),"%")
-    except:
-      print("Unexpected error")
+    #try to print usage stats
+    try:
+      #read json file
+      data = json.load(open('usage.json'))
+      print("Usage:        " + str(data['data_usage']) + " GB")
+      print("Data Cap:     " + str(data['data_cap']) + " GB")
+      print("Overage cost: $" + str(data['overage_cost']))
+      print("Percent Used: " + str(round(data['percent_used']*100,1)) + "%")
+    except Exception as ex:
+      print("Unexpected error: " + ex)
