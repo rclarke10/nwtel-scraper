@@ -2,11 +2,29 @@ from scrapy.http import FormRequest
 from scrapy.spiders import Spider
 from scrapy.selector import Selector
 from scrapy.crawler import CrawlerProcess
+import scrapy
 import json
 
-class CrawlerPipeline(object):
-    def process_item(self, item, spider):
-        results.append(dict(item))
+class DataUsage(scrapy.Item):
+  data_usage = scrapy.Field()
+  data_cap = scrapy.Field() 
+  cost = scrapy.Field() 
+  percent_used = scrapy.Field() 
+
+class DataUsagePipeline(object):
+  def open_spider(self, spider):
+    #open file on spider start
+    self.file = open('usage.json', 'w')
+
+  def close_spider(self, spider):
+    #close file when spider done
+    self.file.close()
+
+  def process_item(self, item, spider):    
+    #dump to usage.json
+    line = json.dumps(dict(item)) + "\n"
+    self.file.write(line)
+    return item
 
 class NwtelSpider(Spider):
   name = "nwtel"
@@ -25,7 +43,7 @@ class NwtelSpider(Spider):
 
   def get_usage(self, response):
     selector = Selector(response)
-    
+
     #grabs current data usage, data cap and current overage cost
     usage = selector.xpath('//a/text()').extract()[2]
     cap = selector.xpath('//td/text()').extract()[0]
@@ -46,31 +64,37 @@ class NwtelSpider(Spider):
              'data_cap': cap_float, 
              'overage_cost': cost, 
              'percent_used': percent_used}
-    
-    #dump to usage.json
-    with open('usage.json', 'w') as file:
-      json.dump(stats, file)
+
+    #send data to Data
+    doc = DataUsage()
+    doc['data_usage'] = usage_float
+    doc['data_cap'] = cap_float
+    doc['cost'] = cost
+    doc['percent_used'] = percent_used
+    yield doc
     
 if __name__ == "__main__":
     #initialize crawler
     process = CrawlerProcess({
       'USER_AGENT': 'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)',
-      'LOG_ENABLED': 'False'
+      'LOG_ENABLED': 'False',
+      'ITEM_PIPELINES': {
+        'nwtel-scraper.DataUsagePipeline': 300,
+      }
     })
 
     #start crawler, blocks until it returns
     process.crawl(NwtelSpider)
     process.start()
 
-    #try to print usage stats
     try:
       #read json file
       data = json.load(open('usage.json'))
-
-      #print data to screen
+      print("test")
+      #print usage stats to screen
       print("Usage:        " + str(data['data_usage']) + " GB")
       print("Data Cap:     " + str(data['data_cap']) + " GB")
-      print("Overage cost: $" + str(data['overage_cost']))
+      print("Overage cost: $" + str(data['cost']))
       print("Percent Used: " + str(round(data['percent_used']*100,1)) + "%")
     except Exception as ex:
       print("Unexpected error: " + ex)
