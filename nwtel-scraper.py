@@ -2,7 +2,18 @@ from scrapy.item import Item, Field
 from scrapy.http import FormRequest
 from scrapy.spiders import Spider
 from scrapy.utils.response import open_in_browser
-from scrapy.selector import HtmlXPathSelector
+from scrapy.selector import Selector
+from scrapy.crawler import CrawlerProcess
+from scrapy.utils.project import get_project_settings
+from scrapy.crawler import Crawler
+import json
+
+results = []
+
+
+class CrawlerPipeline(object):
+    def process_item(self, item, spider):
+        results.append(dict(item))
 
 class NwtelSpider(Spider):
   name = "nwtel"
@@ -17,35 +28,46 @@ class NwtelSpider(Spider):
     yield FormRequest.from_response(response,
                                     formdata=formdata,
                                     formnumber=0,
-                                    callback=self.getUsage)
+                                    callback=self.get_usage)
 
-  def getUsage(self, response):
-    hxs = HtmlXPathSelector(response)
-    #grabs usage
-    usage = hxs.select('//a/text()').extract()[2]
-    #grabs cap
-    cap = hxs.select('//td/text()').extract()[0]
-    #grabs amount over charged
-    cost = hxs.select('//td/text()').extract()[1]
+  def get_usage(self, response):
+    selector = Selector(response)
+    #grabs current data usage, data cap and current overage cost
+    usage = selector.xpath('//a/text()').extract()[2]
+    cap = selector.xpath('//td/text()').extract()[0]
+    cost = selector.xpath('//td/text()').extract()[1]
 
-    usageNum = usage.split(' ')[0]
+    #convert formatted text to numbers to 3 decimal places
+    usage_float = round(float(usage.split(' ')[0]),3)
+    cap_float = round(float(cap.split(' ')[0]),3)
 
-    capNum = cap.split(' ')[0]
+    #calc precent used
+    percent_used = round(usage_float / cap_float , 3)
+    
+    items = {'data_usage': usage_float, 
+             'data_cap': cap_float, 
+             'overage_cost': cost, 
+             'percent_used': percent_used}
+    
+    with open('usage.json', 'w') as file:
+      json.dump(items, file)
+    
+if __name__ == "__main__":
 
-    percentUsed = round(float(usageNum)*100/float(capNum),1)
+    process = CrawlerProcess({
+      'USER_AGENT': 'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)',
+      'LOG_ENABLED': 'False'
+    })
 
-    total = {'dataUsage':usageNum, 
-             'dataCap':capNum, 
-             'overageCost':cost, 
-             'percentUsed': percentUsed}
+    process.crawl(NwtelSpider)
+    process.start() #the script will block here until the crawling is finished
+    try:
+      data = json.load(open('usage.json'))
 
-  
-    print("\n\n\n",total)
-
-
-
-
-
-
-    #current usage XPATH: /html/body/table[1]/tbody/tr[3]/td[1]/a
-    #current cap XPATH:   /html/body/table[1]/tbody/tr[3]/td[2]
+      print("Usage:        ",data['data_usage'], "GB")
+      print("Data Cap:     ",data['data_cap'], "GB")
+      print("Overage cost: ", data['overage_cost'])
+      print("Percent Used: ", data['percent_used'])
+      #print(items)
+    except:
+      print("Unexpected error")
