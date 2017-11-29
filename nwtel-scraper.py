@@ -1,11 +1,7 @@
-from scrapy.item import Item, Field
 from scrapy.http import FormRequest
 from scrapy.spiders import Spider
-from scrapy.utils.response import open_in_browser
 from scrapy.selector import Selector
 from scrapy.crawler import CrawlerProcess
-from scrapy.utils.project import get_project_settings
-from scrapy.crawler import Crawler
 import json
 
 class CrawlerPipeline(object):
@@ -69,6 +65,8 @@ if __name__ == "__main__":
     try:
       #read json file
       data = json.load(open('usage.json'))
+
+      #print data to screen
       print("Usage:        " + str(data['data_usage']) + " GB")
       print("Data Cap:     " + str(data['data_cap']) + " GB")
       print("Overage cost: $" + str(data['overage_cost']))
