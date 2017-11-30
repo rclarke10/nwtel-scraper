@@ -40,14 +40,8 @@ class NwtelSpider(Spider):
 
     #remove $ from cost
     cost = cost[1:]
-    
-    #construct dict containing usage stats
-    stats = {'data_usage': usage_float, 
-             'data_cap': cap_float, 
-             'overage_cost': cost, 
-             'percent_used': percent_used}
 
-    #send data to Data
+    #send stats to DataUsage Item
     doc = DataUsage()
     doc['data_usage'] = usage_float
     doc['data_cap'] = cap_float

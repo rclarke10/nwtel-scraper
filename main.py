@@ -5,7 +5,12 @@ from src.DataUsagePipeline import DataUsagePipeline
 from src.DataUsageSpider import NwtelSpider
 from src.Config import Config
     
+def ask_for_mac():
+  return 1
+
 if __name__ == "__main__":
+  mac = ask_for_mac()
+
   #read config
   logging = Config.logging()
 
@@ -24,11 +29,11 @@ if __name__ == "__main__":
 
   try:
     #read json file
-    data = json.load(open('usage.json'))
+    data = json.load(open('last.json'))
     #print usage stats to screen
     print("Usage:        " + str(data['data_usage']) + " GB")
     print("Data Cap:     " + str(data['data_cap']) + " GB")
     print("Overage cost: $" + str(data['cost']))
     print("Percent Used: " + str(round(data['percent_used']*100,1)) + "%")
   except Exception as ex:
-    print("Unexpected error: " + ex)
+    print("Unexpected error")
