@@ -5,6 +5,7 @@ import scrapy
 import json
 from .DataUsageItem import DataUsage
 from .Config import Config
+import datetime
 
 class NwtelSpider(Spider):
   name = "nwtel"
@@ -43,6 +44,7 @@ class NwtelSpider(Spider):
 
     #send stats to DataUsage Item
     doc = DataUsage()
+    doc['date'] = datetime.datetime.now().isoformat()
     doc['data_usage'] = usage_float
     doc['data_cap'] = cap_float
     doc['cost'] = cost
